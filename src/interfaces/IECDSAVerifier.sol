@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 interface IECDSAVerifier {
-    error InvalidSignaturePackage();
-    error InvalidSignature(uint256 sigIndex, ECDSA.RecoverError errType);
+    error IECDSAVerifier__InvalidSignaturePackage();
+    error IECDSAVerifier__InvalidSignature(uint256 sigIndex, ECDSA.RecoverError errType);
 
     event VerifiersInitialized(uint256 indexed blockNum, bytes32 arrayHash);
     event VerifierRegistered(uint256 indexed blockNum, address indexed signer);

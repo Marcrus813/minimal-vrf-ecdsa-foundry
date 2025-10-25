@@ -47,7 +47,7 @@ contract ECDSAVerifier is
         return block.number;
     }
 
-    // Require any data to be signed in bytes format
+    // Require any data to be converted to bytes format first
     function generateMsgHash(
         bytes memory _encodedData
     ) public pure returns (bytes32) {
@@ -69,10 +69,10 @@ contract ECDSAVerifier is
         address[] memory _verifiers,
         bytes[] memory _signatures
     ) public view returns (bool) {
-        require(_signatures.length >= minimalParticipants, InvalidSignaturePackage());
+        require(_signatures.length >= minimalParticipants, IECDSAVerifier__InvalidSignaturePackage());
         require(
             _verifiers.length == _signatures.length,
-            InvalidSignaturePackage()
+            IECDSAVerifier__InvalidSignaturePackage()
         );
         bytes32 msgHash = generateMsgHash(_msg);
         bytes32 ethSignedHash = generateSignedMsg(msgHash);
@@ -84,18 +84,18 @@ contract ECDSAVerifier is
                 ethSignedHash,
                 currentSignature
             );
-            require(result, InvalidSignature(i, err));
+            require(result, IECDSAVerifier__InvalidSignature(i, err));
         }
 
         return true;
     }
 
     function verifySigner(
-        address _expected,
+        address _provided,
         bytes32 _signedMsgHash,
         bytes memory _sig
     ) public view returns (bool, ECDSA.RecoverError) {
-        if (!checkSigner(_expected)) {
+        if (!checkSigner(_provided)) {
             return (false, ECDSA.RecoverError(1));
         }
 
@@ -106,7 +106,7 @@ contract ECDSAVerifier is
         if (err != ECDSA.RecoverError(0)) {
             return (false, err);
         }
-        if (recoveredAddr == _expected) {
+        if (recoveredAddr == _provided) {
             return (true, ECDSA.RecoverError(0));
         }
         return (false, ECDSA.RecoverError(1));

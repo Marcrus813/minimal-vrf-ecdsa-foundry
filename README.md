@@ -7,9 +7,9 @@ Content:
 
 ## 第一题
 
-- 基础作业：用最小代理实现一个随机数的提交和链上使用，每一个项目开一个逻辑一致的最小代理合约，最小代理合约创建处理之后添加到一个管理合约，管理合约管理所有代理合约，部署合约使用
-  create2 的方式进行部署？
-- 加强版：使用 ECDSA 的算法进行链下提交上来的随机的有，真实性和效性验证（挑战性）
+-   基础作业：用最小代理实现一个随机数的提交和链上使用，每一个项目开一个逻辑一致的最小代理合约，最小代理合约创建处理之后添加到一个管理合约，管理合约管理所有代理合约，部署合约使用
+    create2 的方式进行部署？
+-   加强版：使用 ECDSA 的算法进行链下提交上来的随机的有，真实性和效性验证（挑战性）
 
 ## 第二题： - 将历史上发生重入攻击项目整理出来，并写出被攻击逻辑和攻击 POC （扩展题）
 
@@ -20,11 +20,11 @@ Content:
 
 ### To understand:
 
-- [ ] EIP-1167
-- [ ] create2
-- [ ] How do VRF oracles work? Mainly, how to verify the submitted results? How do cryptography come in?
-	- [ ] BLS
-	- [ ] ECDSA
+-   [x] EIP-1167
+-   [x] create2
+-   [x] How do VRF oracles work? Mainly, how to verify the submitted results? How do cryptography come in?
+    -   [x] BLS
+    -   [x] ECDSA
 
 #### VRF Process and BLS
 
@@ -46,13 +46,17 @@ If to implement with ECDSA:
 BLS enables the system to verify all signatures with one verification calculation, so if I were to use ECDSA, I need to
 verify for all signers, with all the signers pre-registered
 
+**Differences in implementation**
+
+With `fulfilRandomWords`, no longer require `_msgHash`, for ECDSA, I can always re-construct the hash for comparison, not trusting any submitted msg hash, but with BLS, I would need the aggregated hash.
+
 #### Minimal proxy: EIP-1167
 
 **Why it is important?**
 
-- It is cheap to create copy of contracts, because the logic will not be in the creation code, it is only an address of
-  the implementation, and delegatecalls everything
-- The actual logic of the copy is just setting the target address plus a function to forward everything to the target
+-   It is cheap to create copy of contracts, because the logic will not be in the creation code, it is only an address of
+    the implementation, and delegatecalls everything
+-   The actual logic of the copy is just setting the target address plus a function to forward everything to the target
 
 **How to?**
 
@@ -89,7 +93,7 @@ function clone(address target) external returns (address result) {
         mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
 
         /*
-		 * Now we get: 
+		 * Now we get:
 		 *  |               20 bytes                 |                 20 bytes              |           15 bytes          |
             0x3d602d80600a3d3981f3363d3d373d3d3d363d73bebebebebebebebebebebebebebebebebebebebe5af43d82803e903d91602b57fd5bf3
 		 */
@@ -108,7 +112,7 @@ function clone(address target) external returns (address result) {
 In production, will be using OpenZeppelin to implement this
 
 **OpenZeppelin implementation: contracts/proxy/Clones.sol**
-*Q: How and why is it different from example above?*
+_Q: How and why is it different from example above?_
 
 ##### Develop and deploy design
 
@@ -141,5 +145,3 @@ Called by nodes, will verify based on submitted signatures, then update the mapp
 Will use ECDSA to verify signatures, with ecdsa, will have to verify the signatures one by one, ecrecover will give us
 the address, will have to check against verifier registry, key part of this is to sync off-chain signing with
 verification here
-
-
