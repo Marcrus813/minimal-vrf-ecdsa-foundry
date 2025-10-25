@@ -15,3 +15,6 @@ docs/
 
 # dependencies
 dependencies/*
+
+.claude
+CLAUDE.md
