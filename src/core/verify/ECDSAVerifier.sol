@@ -92,13 +92,13 @@ contract ECDSAVerifier is
             IECDSAVerifier__InvalidSignaturePackage()
         );
         bytes32 msgHash = generateMsgHash(_msg);
-        bytes32 ethSignedHash = generateSignedMsg(msgHash);
+        bytes32 prefixedMsgHash = generateSignedMsg(msgHash);
         for (uint256 i = 0; i < _verifiers.length; i++) {
             address currentSigner = _verifiers[i];
             bytes memory currentSignature = _signatures[i];
             (bool result, ECDSA.RecoverError err) = verifySigner(
                 currentSigner,
-                ethSignedHash,
+                prefixedMsgHash,
                 currentSignature
             );
             require(result, IECDSAVerifier__InvalidSignature(i, err));
