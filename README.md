@@ -145,3 +145,14 @@ Called by nodes, will verify based on submitted signatures, then update the mapp
 Will use ECDSA to verify signatures, with ecdsa, will have to verify the signatures one by one, ecrecover will give us
 the address, will have to check against verifier registry, key part of this is to sync off-chain signing with
 verification here
+
+### Testing implementation
+
+Ditched manual `calldata` construction plus `address.call` when interacting with proxy, now just `Implementation(proxyAddress).function(args)`
+
+### Confusions
+#### ECDSA
+
+- Cannot recover correct address from signature
+
+    - Used to think that user signs the raw message hash, then use the prefixed message hash to recover, thought that the math or Ethereum itself deemed so, but in truth: when signing with MetaMask, I passed in the raw message hash, and called sign, what happened under the hood is that MetaMask prefixed the raw hash for me then signed, so on the surface, I am signing the raw hash, but recovering with the prefixed hash, in reality, I or more precisely, the wallet should use the prefixed hash for both signing and recovering, and for this purpose, I will use `MessageHashUtils.sol`

@@ -18,6 +18,8 @@ interface IECDSAVerifier {
         uint256 requirement
     );
 
+    function batchRegisterVerifier(address[] memory _verifiers) external;
+
     function registerVerifier(address _verifier) external returns (uint256);
 
     function unregisterVerifier(address _signer) external returns (uint256);

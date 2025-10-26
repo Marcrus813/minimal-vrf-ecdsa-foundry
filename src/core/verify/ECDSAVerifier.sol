@@ -5,8 +5,13 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {IECDSAVerifier} from "../../interfaces/IECDSAVerifier.sol";
+
+// TODO: debug
+import {console} from "forge-std/Test.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ECDSAVerifier is
     IECDSAVerifier,
@@ -14,8 +19,11 @@ contract ECDSAVerifier is
     UUPSUpgradeable,
     OwnableUpgradeable
 {
+    using MessageHashUtils for bytes32;
+
     mapping(address => bool) public registeredVerifiers;
     uint256 public minimalParticipants;
+    uint256[100] private _preservedSlots;
 
     constructor() {
         _disableInitializers();
@@ -31,9 +39,17 @@ contract ECDSAVerifier is
         _initializeVerifiers(initialVerifiers);
     }
 
+    function batchRegisterVerifier(
+        address[] memory _verifiers
+    ) external onlyOwner {
+        for (uint256 index = 0; index < _verifiers.length; index++) {
+            registerVerifier(_verifiers[index]);
+        }
+    }
+
     function registerVerifier(
         address _verifierAddr
-    ) external onlyOwner returns (uint256) {
+    ) public onlyOwner returns (uint256) {
         registeredVerifiers[_verifierAddr] = true;
         emit IECDSAVerifier.VerifierRegistered(block.number, _verifierAddr);
         return block.number;
@@ -55,13 +71,11 @@ contract ECDSAVerifier is
     }
 
     /*
-     * Getting the data that actually got signed
+     * Getting the data that actually got signed, using OpenZeppelin library: `MessageHashUtils`,
+     * adds prefix: `"\x19Ethereum Signed Message:\n32"` then hashes again
      */
     function generateSignedMsg(bytes32 _msgHash) public pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", _msgHash)
-            );
+        return _msgHash.toEthSignedMessageHash();
     }
 
     function verifyResponse(
@@ -69,7 +83,10 @@ contract ECDSAVerifier is
         address[] memory _verifiers,
         bytes[] memory _signatures
     ) public view returns (bool) {
-        require(_signatures.length >= minimalParticipants, IECDSAVerifier__InvalidSignaturePackage());
+        require(
+            _signatures.length >= minimalParticipants,
+            IECDSAVerifier__InvalidSignaturePackage()
+        );
         require(
             _verifiers.length == _signatures.length,
             IECDSAVerifier__InvalidSignaturePackage()
@@ -103,6 +120,7 @@ contract ECDSAVerifier is
             _signedMsgHash,
             _sig
         );
+
         if (err != ECDSA.RecoverError(0)) {
             return (false, err);
         }
